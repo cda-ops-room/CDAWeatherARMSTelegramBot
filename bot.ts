@@ -205,7 +205,7 @@ CAT Ends On: ${CatStatus.formatDate(new Date(cdaCATStatus?.cat_end_on)) ?? 'N/A'
     
 📍 Home Team Tactical Centre
 CAT Status: ${parsedCATStatusHTTC.catText} ${parsedCATStatusHTTC.emoji}
-CAT Start On: ${CatStatus.formatDate(new Date(httcCATStatus?.cat_end_on)) ?? 'N/A'}
+CAT Start On: ${CatStatus.formatDate(new Date(httcCATStatus?.cat_start_on)) ?? 'N/A'}
 CAT Ends On: ${CatStatus.formatDate(new Date(httcCATStatus?.cat_end_on)) ?? 'N/A'}
     
 Info last updated: ${CatStatus.formatDate(new Date(cdaCATStatus?.update_on)) ?? 'N/A'}

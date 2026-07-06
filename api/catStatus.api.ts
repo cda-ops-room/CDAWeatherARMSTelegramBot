@@ -82,26 +82,26 @@ export namespace CatStatus {
       case '3':
         return {
           emoji: '🟢',
-          catText: '3',
+          catText: 'CAT 3',
         };
 
       case '2':
         return {
           emoji: '🟡',
-          catText: '2',
+          catText: 'CAT 2',
         };
 
       case '1':
         if (startDate > new Date()) {
           return {
             emoji: '🟠',
-            catText: '1 (Incoming)',
+            catText: 'CAT 1 (Incoming)',
           };
         }
 
         return {
           emoji: '🔴',
-          catText: '1',
+          catText: 'CAT 1',
         };
 
       default:
