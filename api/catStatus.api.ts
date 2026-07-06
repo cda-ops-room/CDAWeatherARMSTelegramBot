@@ -112,13 +112,16 @@ export namespace CatStatus {
 
       if (!response.data) {
         console.log('Error getting CAT Status API');
-        return null;
+        throw new Error('Error getting CAT Status API');
       }
 
       if (!response.data.armysectors) {
         console.log('No army sectors found');
-        return null;
+        throw new Error('No army sectors found');
       }
+
+      console.log('Get CAT Status API');
+      console.log(response.data);
 
       const firstSector = response.data.armysectors[0];
 
