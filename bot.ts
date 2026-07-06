@@ -17,6 +17,7 @@ import { rule } from './utils/bot/rule';
 import { env } from './utils/infra/env';
 import logger from './utils/infra/logger';
 import { Rota } from './utils/schedule/rota';
+import { CatStatus } from './api/catStatus.api';
 
 export type BotRuntime = {
   bot: Telegraf;
@@ -32,6 +33,8 @@ function registerBotActionHandlers(bot: Telegraf, job: schedule.Job) {
   // ==============================
   // #region Callback query handlers for setting rota subscriptions
   // ==============================
+
+  // Set rota 1
   bot.action('set_rota_1', async (ctx) => {
     await Redis.assignRota(1, ctx);
     const nextUpdate = Rota.getNextUpdateDateForRota(1) || job.nextInvocation();
@@ -41,6 +44,7 @@ function registerBotActionHandlers(bot: Telegraf, job: schedule.Job) {
     ctx.answerCbQuery(); // Acknowledge the callback query to remove the loading state
   });
 
+  // Set rota 2
   bot.action('set_rota_2', async (ctx) => {
     // call assignRota
     await Redis.assignRota(2, ctx);
@@ -51,6 +55,7 @@ function registerBotActionHandlers(bot: Telegraf, job: schedule.Job) {
     ctx.answerCbQuery(); // Acknowledge the callback query to remove the loading state
   });
 
+  // Set rota 3
   bot.action('set_rota_3', async (ctx) => {
     await Redis.assignRota(3, ctx);
     const nextUpdate = Rota.getNextUpdateDateForRota(3) || job.nextInvocation();
@@ -60,15 +65,20 @@ function registerBotActionHandlers(bot: Telegraf, job: schedule.Job) {
     ctx.answerCbQuery(); // Acknowledge the callback query to remove the loading state
   });
 
+  // Set OH
   bot.action('set_office_hours', async (ctx) => {
     await Redis.assignRota('office_hours', ctx);
     const nextUpdate = job.nextInvocation();
-    ctx.editMessageText(buildRotaSetSuccessMessage('office_hours', nextUpdate), {
-      parse_mode: 'HTML',
-    });
+    ctx.editMessageText(
+      buildRotaSetSuccessMessage('office_hours', nextUpdate),
+      {
+        parse_mode: 'HTML',
+      },
+    );
     ctx.answerCbQuery(); // Acknowledge the callback query to remove the loading state
   });
 
+  // Stop updates
   bot.action('stop_updates', async (ctx) => {
     if (!ctx.chat) return;
     try {
@@ -77,28 +87,6 @@ function registerBotActionHandlers(bot: Telegraf, job: schedule.Job) {
       logger.error(`Failed to remove chat ID from subscriptions: ${err}`);
     }
     ctx.editMessageText(STOP_SUCCESS_MESSAGE);
-    ctx.answerCbQuery(); // Acknowledge the callback query to remove the loading state
-  });
-
-  bot.action('lightning_cda', async (ctx) => {
-    const data = await Lightning.retrieveLightningData(
-      Lightning.Defaults.CDA.latitude,
-      Lightning.Defaults.CDA.longitude,
-      'CDA',
-    );
-
-    ctx.editMessageText(data.message);
-    ctx.answerCbQuery(); // Acknowledge the callback query to remove the loading state
-  });
-
-  bot.action('lightning_httc', async (ctx) => {
-    const data = await Lightning.retrieveLightningData(
-      Lightning.Defaults.HTTC.latitude,
-      Lightning.Defaults.HTTC.longitude,
-      'HTTC',
-    );
-
-    ctx.editMessageText(data.message);
     ctx.answerCbQuery(); // Acknowledge the callback query to remove the loading state
   });
 }
@@ -110,6 +98,7 @@ function registerHandlers(bot: Telegraf, job: schedule.Job) {
   // #region Bot command and action handlers
   // ==============================
 
+  // Start
   bot.start(async (ctx) => {
     logger.info(
       `Start command called by Chat ID: ${ctx.chat.id}. Next update at ${new Date(job.nextInvocation()).toLocaleString('en-SG', { timeZone: 'Asia/Singapore' })}`,
@@ -137,23 +126,20 @@ function registerHandlers(bot: Telegraf, job: schedule.Job) {
       return;
     }
 
-    ctx.telegram.sendMessage(
-      ctx.chat.id,
-      WELCOME_SUBSCRIBED_MESSAGE,
-      {
-        ...Markup.inlineKeyboard([
-          Markup.button.callback('Rota 1', 'set_rota_1'),
-          Markup.button.callback('Rota 2', 'set_rota_2'),
-          Markup.button.callback('Rota 3', 'set_rota_3'),
-          Markup.button.callback('Office Hours', 'set_office_hours'),
-        ]),
-        parse_mode: 'HTML',
-      },
-    );
+    ctx.telegram.sendMessage(ctx.chat.id, WELCOME_SUBSCRIBED_MESSAGE, {
+      ...Markup.inlineKeyboard([
+        Markup.button.callback('Rota 1', 'set_rota_1'),
+        Markup.button.callback('Rota 2', 'set_rota_2'),
+        Markup.button.callback('Rota 3', 'set_rota_3'),
+        Markup.button.callback('Office Hours', 'set_office_hours'),
+      ]),
+      parse_mode: 'HTML',
+    });
 
     logger.info('Added Chat ID: ' + ctx.chat.id + ' to subscribed chat IDs.');
   });
 
+  // Weather command
   bot.command('weather', async (ctx) => {
     logger.info(
       'Weather command called by user: ' +
@@ -181,9 +167,9 @@ function registerHandlers(bot: Telegraf, job: schedule.Job) {
     );
   });
 
-  bot.command('lightning', async (ctx) => {
+  bot.command('catstatus', async (ctx) => {
     logger.info(
-      'Lightning command called by user: ' +
+      'CAT status command called by user: ' +
         ctx.from.username +
         ' (ID: ' +
         ctx.from.id +
@@ -193,16 +179,43 @@ function registerHandlers(bot: Telegraf, job: schedule.Job) {
 
     const loadingMessage = await ctx.reply(LOADING_MESSAGE);
 
-    ctx.telegram.sendMessage(
+    const promises = [
+      CatStatus.API.getCatStatusFor('CDA'),
+      CatStatus.API.getCatStatusFor('HTTC'),
+    ];
+
+    const [cdaCATStatus, httcCATStatus] = await Promise.all(promises);
+
+    const message = `📍 Civil Defence Academy
+    CAT Status: ${cdaCATStatus?.CAT ?? 'N/A'}
+    CAT Start On: ${cdaCATStatus?.cat_start_on ?? 'N/A'}
+    CAT Ends On: ${cdaCATStatus?.cat_end_on ?? 'N/A'}
+    
+    📍 Home Team Tactical Centre
+    CAT Status: ${httcCATStatus?.cat_start_on ?? 'N/A'}
+    CAT Start On: ${httcCATStatus?.cat_end_on ?? 'N/A'}
+    CAT Ends On: ${httcCATStatus?.cat_end_on ?? 'N/A'}
+    
+    Info last updated: ${cdaCATStatus?.update_on ?? 'N/A'}
+    ⚠️ All info is accurate as of the last updated time.
+    
+    ℹ️ CAT Status Legend: 
+    CAT 3: Outdoor activities are allowed.
+    CAT 2: Outdoor activities to be decided by conducting structure.
+    CAT 1: Heavy rain and/or lightning risk. Outdoor activities are NOT ALLOWED.`;
+
+    ctx.telegram.editMessageText(
       ctx.chat.id,
-      'Please select your location:',
-      Markup.inlineKeyboard([
-        Markup.button.callback('CDA', 'lightning_cda'),
-        Markup.button.callback('HTTC', 'lightning_httc'),
-      ]),
+      loadingMessage.message_id,
+      undefined,
+      message,
+      {
+        parse_mode: 'HTML',
+      },
     );
   });
 
+  // Settings
   bot.command('settings', async (ctx) => {
     const rotaNumber = await Redis.getChatSubscriptionRota(ctx.chat.id);
 
@@ -214,22 +227,18 @@ function registerHandlers(bot: Telegraf, job: schedule.Job) {
       return;
     }
 
-    ctx.telegram.sendMessage(
-      ctx.chat.id,
-      buildSettingsMessages(rotaNumber),
-      {
-        ...Markup.inlineKeyboard([
-          [
-            Markup.button.callback('Rota 1', 'set_rota_1'),
-            Markup.button.callback('Rota 2', 'set_rota_2'),
-            Markup.button.callback('Rota 3', 'set_rota_3'),
-            Markup.button.callback('Office Hours', 'set_office_hours'),
-          ],
-          [Markup.button.callback('Stop Updates', 'stop_updates')],
-        ]),
-        parse_mode: 'HTML',
-      },
-    );
+    ctx.telegram.sendMessage(ctx.chat.id, buildSettingsMessages(rotaNumber), {
+      ...Markup.inlineKeyboard([
+        [
+          Markup.button.callback('Rota 1', 'set_rota_1'),
+          Markup.button.callback('Rota 2', 'set_rota_2'),
+          Markup.button.callback('Rota 3', 'set_rota_3'),
+          Markup.button.callback('Office Hours', 'set_office_hours'),
+        ],
+        [Markup.button.callback('Stop Updates', 'stop_updates')],
+      ]),
+      parse_mode: 'HTML',
+    });
   });
 
   bot.help((ctx) => {
