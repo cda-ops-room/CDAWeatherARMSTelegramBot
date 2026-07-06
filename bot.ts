@@ -179,40 +179,70 @@ function registerHandlers(bot: Telegraf, job: schedule.Job) {
 
     const loadingMessage = await ctx.reply(LOADING_MESSAGE);
 
-    const promises = [
-      CatStatus.API.getCatStatusFor('CDA'),
-      CatStatus.API.getCatStatusFor('HTTC'),
-    ];
+    try {
+      const promises = [
+        CatStatus.API.getCatStatusFor('CDA'),
+        CatStatus.API.getCatStatusFor('HTTC'),
+      ];
 
-    const [cdaCATStatus, httcCATStatus] = await Promise.all(promises);
+      const [cdaCATStatus, httcCATStatus] = await Promise.all(promises);
 
-    const message = `📍 Civil Defence Academy
-    CAT Status: ${cdaCATStatus?.CAT ?? 'N/A'}
-    CAT Start On: ${cdaCATStatus?.cat_start_on ?? 'N/A'}
-    CAT Ends On: ${cdaCATStatus?.cat_end_on ?? 'N/A'}
-    
-    📍 Home Team Tactical Centre
-    CAT Status: ${httcCATStatus?.cat_start_on ?? 'N/A'}
-    CAT Start On: ${httcCATStatus?.cat_end_on ?? 'N/A'}
-    CAT Ends On: ${httcCATStatus?.cat_end_on ?? 'N/A'}
-    
-    Info last updated: ${cdaCATStatus?.update_on ?? 'N/A'}
-    ⚠️ All info is accurate as of the last updated time.
-    
-    ℹ️ CAT Status Legend: 
-    CAT 3: Outdoor activities are allowed.
-    CAT 2: Outdoor activities to be decided by conducting structure.
-    CAT 1: Heavy rain and/or lightning risk. Outdoor activities are NOT ALLOWED.`;
+      const [parsedCATStatusCDA, parsedCATStatusHTTC] = [
+        CatStatus.parseCATStatus(
+          new Date(cdaCATStatus.cat_start_on),
+          cdaCATStatus.CAT,
+        ),
+        CatStatus.parseCATStatus(
+          new Date(httcCATStatus.cat_start_on),
+          httcCATStatus.CAT,
+        ),
+      ];
 
-    ctx.telegram.editMessageText(
-      ctx.chat.id,
-      loadingMessage.message_id,
-      undefined,
-      message,
-      {
-        parse_mode: 'HTML',
-      },
-    );
+      const message = `📍 Civil Defence Academy
+CAT Status: ${parsedCATStatusCDA.catText} ${parsedCATStatusCDA.emoji}
+CAT Start On: ${CatStatus.formatDate(new Date(cdaCATStatus?.cat_start_on)) ?? 'N/A'}
+CAT Ends On: ${CatStatus.formatDate(new Date(cdaCATStatus?.cat_end_on)) ?? 'N/A'}
+    
+📍 Home Team Tactical Centre
+CAT Status: ${parsedCATStatusHTTC.catText} ${parsedCATStatusHTTC.emoji}
+CAT Start On: ${CatStatus.formatDate(new Date(httcCATStatus?.cat_end_on)) ?? 'N/A'}
+CAT Ends On: ${CatStatus.formatDate(new Date(httcCATStatus?.cat_end_on)) ?? 'N/A'}
+    
+Info last updated: ${CatStatus.formatDate(new Date(cdaCATStatus?.update_on)) ?? 'N/A'}
+⚠️ All info is accurate as of the last updated time.
+    
+ℹ️ CAT Status Legend:
+🟢 CAT 3: Outdoor activities are allowed.
+🟡 CAT 2: Outdoor activities to be decided by conducting structure.
+🟠 CAT 1 (Incoming): CAT 1 has been declared and will take effect at the stated time. Prepare to cease outdoor activities.
+🔴 CAT 1: Heavy rain and/or lightning risk. Outdoor activities are NOT ALLOWED.`;
+
+      ctx.telegram.editMessageText(
+        ctx.chat.id,
+        loadingMessage.message_id,
+        undefined,
+        message,
+        {
+          parse_mode: 'HTML',
+        },
+      );
+    } catch (error) {
+      console.log(error);
+
+      const message = `There was an error getting the CAT Status. Please try again later.
+      
+      Error: ${error}`;
+
+      ctx.telegram.editMessageText(
+        ctx.chat.id,
+        loadingMessage.message_id,
+        undefined,
+        message,
+        {
+          parse_mode: 'HTML',
+        },
+      );
+    }
   });
 
   // Settings

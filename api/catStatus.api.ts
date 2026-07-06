@@ -73,10 +73,43 @@ export namespace CatStatus {
     }
   }
 
-  function formatDate(date: Date): string {
-    return format(date, 'd MMMM yyyy h:mm aaaa', {
-      in: tz(SINGAPORE_TIME_ZONE),
-    });
+  export function formatDate(date: Date): string {
+    return format(date, 'd MMMM yyyy HH:mm');
+  }
+
+  export function parseCATStatus(startDate: Date, catStatus: string) {
+    switch (catStatus) {
+      case '3':
+        return {
+          emoji: '🟢',
+          catText: '3',
+        };
+
+      case '2':
+        return {
+          emoji: '🟡',
+          catText: '2',
+        };
+
+      case '1':
+        if (startDate > new Date()) {
+          return {
+            emoji: '🟠',
+            catText: '1 (Incoming)',
+          };
+        }
+
+        return {
+          emoji: '🔴',
+          catText: '1',
+        };
+
+      default:
+        return {
+          emoji: '',
+          catText: catStatus,
+        };
+    }
   }
 
   export namespace Defaults {
@@ -126,10 +159,6 @@ export namespace CatStatus {
       const sector = response.data.armysectors;
 
       const data = sector.weather;
-
-      data.cat_start_on = formatDate(parseISO(data.cat_start_on));
-      data.cat_end_on = formatDate(parseISO(data.cat_end_on));
-      data.update_on = formatDate(parseISO(data.update_on));
 
       return data;
     }
