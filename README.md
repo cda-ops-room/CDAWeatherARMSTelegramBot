@@ -1,16 +1,18 @@
 # CDA Weather ARMS Bot
 
-Telegram bot for CDA and HTTC weather reporting. It sends scheduled WBGT and air temperature updates before ARMS reporting windows, supports rota-based subscriptions, and lets users request live weather or lightning checks on demand.
+Telegram bot for CDA and HTTC weather reporting. It:
+- sends scheduled WBGT and air temperature updates before ARMS reporting windows based on your shift dates (Rota) or Office Hours
+- lets users request WBGT or CAT status on demand.
 
-If you want to use the bot as an end user, start with the GitHub wiki:
+If you want to use the bot as an end user, Go here:
 
 - [Getting Started (User Guide)](https://github.com/nabilridhwan/CDAWeatherARMSTelegramBot/wiki/Getting-Started-(User-Guide))
 
 ## Screenshots
 
-| Welcome | `/weather` | Scheduled update |
-| --- | --- | --- |
-| ![Welcome screen](docs/welcome.png) | ![Weather command example](docs/weather.png) | ![Scheduled weather update example](docs/weather-update.png) |
+| Welcome                             | `/weather`                                   | Scheduled update                                             | `/catstatus`                               |
+|-------------------------------------|----------------------------------------------|--------------------------------------------------------------|--------------------------------------------|
+| ![Welcome screen](docs/welcome.png) | ![Weather command example](docs/weather.png) | ![Scheduled weather update example](docs/weather-update.png) | ![CAT Status example](docs/cat-status.png) |
 
 ## Disclaimer
 
@@ -20,6 +22,10 @@ This is a personal project and is not affiliated with or endorsed by:
 - National Environment Agency (NEA)
 - Singapore Civil Defence Force (SCDF)
 
+## Attribution
+- Weather data comes from the [data.gov.sg](https://data.gov.sg/) real-time weather and lightning APIs.
+- CAT Status data comes from the [Andrew Lee's CAT Status API](https://github.com/ajlee2006/apps.andewmole.com/tree/main/cat1) which is a tunnel into getting the data from SafeGuardian.
+
 ## What The Project Does
 
 The bot currently handles:
@@ -27,7 +33,7 @@ The bot currently handles:
 - scheduled weekday weather updates at `09:50`, `11:50`, `13:50`, and `15:50` Singapore time
 - rota-based subscriptions for `Rota 1`, `Rota 2`, `Rota 3`, or `office_hours`
 - on-demand `/weather` snapshots for CDA and HTTC
-- on-demand `/lightning` checks for CDA and HTTC
+- on-demand `/catstatus` for CAT Statuses
 - owner-only `/announcement` broadcasts to all subscribed chats
 - Telegram webhook handling with header-based secret validation
 - Redis-backed distributed locking so multiple app instances do not double-send scheduled messages
@@ -44,10 +50,12 @@ The app exposes:
 
 - `/start` subscribes a user and shows schedule options
 - `/weather` returns the latest CDA and HTTC weather snapshot
-- `/lightning` lets the user choose CDA or HTTC and checks nearby lightning activity
+- `/catstatus` check CAT status for both CDA and HTTC
 - `/settings` changes rota/office-hours subscription or unsubscribes
 - `/help` shows a short usage summary
-- `/announcement <message>` sends a broadcast to all subscribed chats, but only for `OWNER_USER_ID`
+- `/announcement <message>` sends a broadcast to all subscribed chats, but only for `OWNER_USER_ID` in `.env` or the Environment Variables
+
+# For Developers
 
 ## Runtime Behavior
 
