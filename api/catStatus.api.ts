@@ -123,9 +123,9 @@ export namespace CatStatus {
       console.log('Get CAT Status API');
       console.log(response.data);
 
-      const firstSector = response.data.armysectors[0];
+      const sector = response.data.armysectors;
 
-      const data = firstSector.weather;
+      const data = sector.weather;
 
       data.cat_start_on = formatDate(parseISO(data.cat_start_on));
       data.cat_end_on = formatDate(parseISO(data.cat_end_on));

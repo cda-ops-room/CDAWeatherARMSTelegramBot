@@ -5,9 +5,9 @@ export interface CatStatusAPIResponse {
 }
 
 export interface CatStatusData {
-  bases: WeatherEntry<'base'>[];
-  airbases: WeatherEntry<'airbase'>[];
-  armysectors: WeatherEntry<'sector'>[];
+  bases: WeatherEntry<'base'>;
+  airbases: WeatherEntry<'airbase'>;
+  armysectors: WeatherEntry<'sector'>;
 }
 
 export interface Location {
