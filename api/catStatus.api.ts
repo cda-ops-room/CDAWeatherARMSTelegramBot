@@ -80,9 +80,11 @@ export namespace CatStatus {
 
   export function parseCATStatus(startDate: Date, catStatus: string) {
     const startDateTZ = new TZDate(startDate, 'Asia/Singapore');
+    const fixed = new Date(startDate.getTime() - 8 * 60 * 60 * 1000);
+    const fixedTZ = new TZDate(fixed, 'Asia/Singapore');
     const date = new TZDate(new Date(), 'Asia/Singapore');
     console.log(
-      `Parsing cat status for startDate: ${startDate.toISOString()} cat status: ${catStatus} and current date: ${date.toISOString()}`,
+      `Parsing cat status for startDate: ${fixedTZ.toISOString()} cat status: ${catStatus} and current date: ${date.toISOString()}`,
     );
 
     switch (catStatus) {
@@ -99,7 +101,7 @@ export namespace CatStatus {
         };
 
       case '1':
-        if (isAfter(startDateTZ, date)) {
+        if (isAfter(fixedTZ, date)) {
           return {
             emoji: '🟠',
             catText: 'CAT 1 (Incoming)',
