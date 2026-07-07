@@ -1,4 +1,4 @@
-import { tz } from '@date-fns/tz';
+import { tz, TZDate } from '@date-fns/tz';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 import { format } from 'date-fns/format';
@@ -79,7 +79,7 @@ export namespace CatStatus {
   }
 
   export function parseCATStatus(startDate: Date, catStatus: string) {
-    const date = new Date();
+    const date = new TZDate(new Date(), 'Asia/Singapore');
     console.log(
       `Parsing cat status for startDate: ${startDate.toISOString()} cat status: ${catStatus} and current date: ${date.toISOString()}`,
     );
