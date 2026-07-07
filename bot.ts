@@ -271,24 +271,31 @@ Info last updated: ${CatStatus.formatDate(new Date(cdaCATStatus?.update_on)) ?? 
     });
   });
 
+  // Help
   bot.help((ctx) => {
     ctx.reply(HELP_MESSAGE, { parse_mode: 'HTML' });
   });
 }
 
+// TODO: Add handlers to add other admins via username
 function registerAdminHandlers(bot: Telegraf, job: schedule.Job) {
   // Usage: /announcement [message]
   // Example: /announcement Weather update will be delayed today due to API issues.
   bot.command('announcement', async (ctx) => {
+    // Check if the person is allowed to send an announcement
     if (ctx.from.id.toString() !== env.OWNER_USER_ID) {
-      ctx.reply('You are not authorized to use this command.');
+      await ctx.reply('You are not authorized to use this command.');
       return;
     }
 
-    const announcement = ctx.message.text.split(' ').slice(1).join(' ');
+    const announcementMsg = ctx.message.text
+      .split(' ')
+      .slice(1)
+      .join(' ')
+      .trim();
 
-    if (!announcement) {
-      ctx.reply('Please provide a message for the announcement.');
+    if (!announcementMsg) {
+      await ctx.reply('Please provide a message for the announcement.');
       return;
     }
 
@@ -297,14 +304,14 @@ function registerAdminHandlers(bot: Telegraf, job: schedule.Job) {
     await MessageQueue.sendAnnouncementMessages(
       bot,
       subscribedChatIds.map((id) => parseInt(id, 10)),
-      announcement,
+      announcementMsg,
     );
 
-    ctx.reply('✅ Announcement sent to all subscribed chats.');
-    ctx.reply('📢 Your announcement: ' + announcement);
+    await ctx.reply('✅ Announcement sent to all subscribed chats.');
+    await ctx.reply('📢 Your announcement: ' + announcementMsg);
 
     logger.info(
-      `Admin announcement sent by user: ${ctx.from.username} (ID: ${ctx.from.id}). Message: ${announcement}`,
+      `Admin announcement sent by user: ${ctx.from.username} (ID: ${ctx.from.id}). Message: ${announcementMsg}`,
     );
   });
 }
