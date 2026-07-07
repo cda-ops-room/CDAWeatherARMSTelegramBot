@@ -79,10 +79,17 @@ export namespace CatStatus {
   }
 
   export function parseCATStatus(startDate: Date, catStatus: string) {
-    const startDateTZ = new TZDate(startDate, 'Asia/Singapore');
+    // The var here is needed because the time from the API is returning the correct time but wrong timezone
+    // "2026-07-07T13:50:00.000Z" -> Correct SG time of 13:50 but the Z at the end represents UTC timezone hence it is wrong
+    // So we minus 8 hours from the time and then it becomes UTC time
+    // Use the UTC time and convert to Asia/Singapore
     const fixed = new Date(startDate.getTime() - 8 * 60 * 60 * 1000);
     const fixedTZ = new TZDate(fixed, 'Asia/Singapore');
+
+    // Convert our current time into Asia/Singapore
     const date = new TZDate(new Date(), 'Asia/Singapore');
+
+    // Debug log
     console.log(
       `Parsing cat status for startDate: ${fixedTZ.toISOString()} cat status: ${catStatus} and current date: ${date.toISOString()}`,
     );
