@@ -5,6 +5,7 @@ import { format } from 'date-fns/format';
 import { parseISO } from 'date-fns/parseISO';
 import logger from '../utils/infra/logger';
 import { CatStatusAPIResponse } from './types/catStatus';
+import { isAfter } from 'date-fns';
 
 export namespace CatStatus {
   const SINGAPORE_TIME_ZONE = 'Asia/Singapore';
@@ -78,6 +79,11 @@ export namespace CatStatus {
   }
 
   export function parseCATStatus(startDate: Date, catStatus: string) {
+    const date = new Date();
+    console.log(
+      `Parsing cat status for startDate: ${startDate.toISOString()} cat status: ${catStatus} and current date: ${date.toISOString()}`,
+    );
+
     switch (catStatus) {
       case '3':
         return {
@@ -92,7 +98,7 @@ export namespace CatStatus {
         };
 
       case '1':
-        if (startDate > new Date()) {
+        if (isAfter(startDate, date)) {
           return {
             emoji: '🟠',
             catText: 'CAT 1 (Incoming)',
