@@ -79,6 +79,7 @@ export namespace CatStatus {
   }
 
   export function parseCATStatus(startDate: Date, catStatus: string) {
+    const startDateTZ = new TZDate(startDate, 'Asia/Singapore');
     const date = new TZDate(new Date(), 'Asia/Singapore');
     console.log(
       `Parsing cat status for startDate: ${startDate.toISOString()} cat status: ${catStatus} and current date: ${date.toISOString()}`,
@@ -98,7 +99,7 @@ export namespace CatStatus {
         };
 
       case '1':
-        if (isAfter(startDate, date)) {
+        if (isAfter(startDateTZ, date)) {
           return {
             emoji: '🟠',
             catText: 'CAT 1 (Incoming)',
