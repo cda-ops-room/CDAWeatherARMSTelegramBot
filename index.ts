@@ -44,17 +44,27 @@ app.get('/health', async (req: any, res: any) => {
     office_hours: `${environment}:chat_ids:office_hours`,
   };
 
-  const [memberStatsEntries, subscribedChatIds] = await Promise.all([
-    Promise.all(
-      Object.entries(subscriptionKeys).map(
-        async ([key, redisKey]) =>
-          [key, await Redis.getRedisClient().scard(redisKey)] as const,
+  const [memberStatsEntries, subscriptionChatIdsEntries, subscribedChatIds] =
+    await Promise.all([
+      Promise.all(
+        Object.entries(subscriptionKeys).map(
+          async ([key, redisKey]) =>
+            [key, await Redis.getRedisClient().scard(redisKey)] as const,
+        ),
       ),
-    ),
-    Redis.getRedisClient().sunion(...Object.values(subscriptionKeys)),
-  ]);
+      Promise.all(
+        Object.entries(subscriptionKeys).map(
+          async ([key, redisKey]) =>
+            [key, await Redis.getRedisClient().smembers(redisKey)] as const,
+        ),
+      ),
+      Redis.getRedisClient().sunion(...Object.values(subscriptionKeys)),
+    ]);
 
   const member_stats = Object.fromEntries(memberStatsEntries);
+  const subscriptionChatIds = Object.fromEntries(subscriptionChatIdsEntries);
+
+  console.log('Subscription chat ids by key:', subscriptionChatIds);
 
   return res.status(200).json({
     status: 'ok',
